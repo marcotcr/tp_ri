@@ -5,7 +5,7 @@ InvertedIndex::InvertedIndex() {
 }
 
 void InvertedIndex::Init(const string& output_file,
-const list<string>& document_list) {
+const list<Document>& document_list) {
   // It contains a string, so its size must be added by MAXIMUM_STRING_SIZE.
   int size_of_triple = sizeof(TermDocumentFrequency) + sizeof(char) *
   MAXIMUM_STRING_SIZE;
@@ -16,16 +16,12 @@ const list<string>& document_list) {
 
   TermFrequencyMap index_terms;
   int i = 1;
-  for (list<string>::const_iterator it = document_list.begin();
+  for (list<Document>::const_iterator it = document_list.begin();
   it != document_list.end(); ++it) {
-    this->ParseIntoIndexTerms(*it, &index_terms);
+    this->ParseIntoIndexTerms((*it).getText(), &index_terms);
     TermFrequencyMap::iterator it2;
     for (it2 = index_terms.begin(); it2 != index_terms.end(); ++it2) {
-      stringstream oi;
-      oi<<i;
-      string d;
-      oi >> d;
-      this->ProcessIndexTerm(it2->first, d, it2->second);
+      this->ProcessIndexTerm(it2->first, (*it).getURL(), it2->second);
       // This is the size of the map structure plus the size of the elements.
       int size_of_dictionary = sizeof(dictionary_) + dictionary_.size() *
       (MAXIMUM_STRING_SIZE + sizeof(int));

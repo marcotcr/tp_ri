@@ -59,17 +59,31 @@ int main(int argc, char** argv) {
   printf("Total: %d\n", i);
   delete reader;
   return EXIT_SUCCESS;*/
-  std::list<std::string> document_list;
-  document_list.push_back("Pease porridge hot, pease porridge cold,");
-  document_list.push_back("Pease porridge in the pot,");
-  document_list.push_back("Nine days old.");
-  document_list.push_back("Some like it hot, some like it cold,");
-  document_list.push_back("Some like it in the pot,");
-  document_list.push_back("Nine days old.");
+  std::list<Document> document_list;
+  Document teste;
+  teste.setURL("1");
+  teste.setText("Pease porridge hot, pease porridge cold,");
+  document_list.push_back(teste);
+  teste.setURL("2");
+  teste.setText("Pease porridge in the pot,");
+  document_list.push_back(teste);
+  teste.setURL("3");
+  teste.setText("Nine days old.");
+  document_list.push_back(teste);
+  teste.setURL("4");
+  teste.setText("Some like it hot, some like it cold,");
+  document_list.push_back(teste);
+  teste.setURL("5");
+  teste.setText("Some like it in the pot,");
+  document_list.push_back(teste);
+  teste.setURL("6");
+  teste.setText("Nine days old.");
+  document_list.push_back(teste);
+
   std::string output_file = "output";
   InvertedIndex oi;
   oi.Init(output_file, document_list);
-  oi.PrintTriples();
+//  oi.PrintTriples();
 
 }
 

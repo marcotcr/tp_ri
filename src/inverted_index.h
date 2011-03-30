@@ -5,7 +5,9 @@
 #include <vector>
 #include <algorithm>
 #include "./util.h"
+#include "./Document.h"
 #include "./term_document_frequency.h"
+using namespace RICPNS;
 
 
 const int MAXIMUM_STRING_SIZE = 50;
@@ -24,7 +26,7 @@ class InvertedIndex {
   // final output.
   // FIXME: I need the document names. Maybe make document_list be a list of
   // documents instead of strings.
-  void Init(const string& output_file, const list<string>& document_list);
+  void Init(const string& output_file, const list<Document>& document_list);
   void PrintTriples();
   
  
