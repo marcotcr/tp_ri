@@ -6,12 +6,25 @@
 #include <algorithm>
 #include "./util.h"
 #include "./term_document_frequency.h"
+
+
+const int MAXIMUM_STRING_SIZE = 50;
+const long int AVAILABLE_MEMORY = 41943040; // 40 MegaBytes
+
 using namespace std;
 using namespace std::tr1;
 class InvertedIndex {
  public:
   typedef unordered_map<string, int> TermFrequencyMap;
-  InvertedIndex(const string& output_file, const list<string>& document_list);
+
+  // Default constructor - does nothing
+  InvertedIndex();
+
+  // Initializes and constructs the inverted index. Uses the output file as
+  // final output.
+  // FIXME: I need the document names. Maybe make document_list be a list of
+  // documents instead of strings.
+  void Init(const string& output_file, const list<string>& document_list);
   void PrintTriples();
   
  
@@ -35,5 +48,9 @@ class InvertedIndex {
   // triples.
   void ProcessIndexTerm(const string& index_term,
   const string& document, const int term_frequency);
+
+  // Sorts and writes a run to disk. Will write on file named run%d, %d being
+  // the first parameter. Will also clear the triples_ vector.
+  void WriteRunOnDisk(int run_number);
 
 };

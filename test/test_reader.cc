@@ -67,7 +67,8 @@ int main(int argc, char** argv) {
   document_list.push_back("Some like it in the pot,");
   document_list.push_back("Nine days old.");
   std::string output_file = "output";
-  InvertedIndex oi(output_file, document_list);
+  InvertedIndex oi;
+  oi.Init(output_file, document_list);
   oi.PrintTriples();
 
 }
