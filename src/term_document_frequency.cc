@@ -1,5 +1,8 @@
 #include "./term_document_frequency.h"
 
+TermDocumentFrequency::TermDocumentFrequency() {
+}
+
 TermDocumentFrequency::TermDocumentFrequency(const int term,const string&
 document,const int frequency):
 term_(term), document_(document), frequency_(frequency) {

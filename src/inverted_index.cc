@@ -1,11 +1,16 @@
 #include "./inverted_index.h"
 #include <sstream>
 
-InvertedIndex::InvertedIndex() {
+InvertedIndex::InvertedIndex(): number_of_runs_(0) {
 }
 
 void InvertedIndex::Init(const string& output_file,
 const list<Document>& document_list) {
+  this->ProcessDocumentList(document_list);
+  this->MergeRuns(output_file);
+}
+
+void InvertedIndex::ProcessDocumentList(const list<Document>& document_list) {
   // It contains a string, so its size must be added by MAXIMUM_STRING_SIZE.
   int size_of_triple = sizeof(TermDocumentFrequency) + sizeof(char) *
   MAXIMUM_STRING_SIZE;
@@ -15,7 +20,6 @@ const list<Document>& document_list) {
 
 
   TermFrequencyMap index_terms;
-  int i = 1;
   for (list<Document>::const_iterator it = document_list.begin();
   it != document_list.end(); ++it) {
     this->ParseIntoIndexTerms((*it).getText(), &index_terms);
@@ -27,14 +31,90 @@ const list<Document>& document_list) {
       (MAXIMUM_STRING_SIZE + sizeof(int));
       //maximum_number_of_triples = (AVAILABLE_MEMORY - size_of_dictionary)/
       //size_of_triple;
-      maximum_number_of_triples = 3;
+      maximum_number_of_triples = 7;
       if (maximum_number_of_triples <= triples_.size()) {
-        this->WriteRunOnDisk(number_of_runs++);
+        this->WriteRunOnDisk(number_of_runs_++);
       }
     }
-    ++i;
     index_terms.clear();
   }
+  if (!triples_.empty()) {
+    this->WriteRunOnDisk(number_of_runs_++);
+  }
+}
+// This is used to compair a pair triple, run.
+bool ComparePairTripleRun(const pair<TermDocumentFrequency, int>& a,
+const pair<TermDocumentFrequency, int>& b) {
+  return !TermDocumentFrequency::CompareTriples(a.first, b.first); 
+}
+void InvertedIndex::MergeRuns(const string& output_file) {
+  // FIXME: This certainly needs to be fixed.
+  int read_size = 3;
+
+  FILE* output = fopen(output_file.c_str(), "w");
+  vector<FILE*> runs(number_of_runs_);
+  // This pairs a triple to a run, so we know when all the triples have been
+  // read from a run's block.
+  vector< pair<TermDocumentFrequency, int> > triples;
+  // Counts how many triples have been read from a run, and haven't been
+  // placed in the output.
+  vector<int> triples_left(number_of_runs_, 0);
+  for (int i = 0; i < runs.size(); ++i) {
+    stringstream stream;
+    stream << i;
+    string file_name;
+    stream >> file_name;
+    file_name = "run" + file_name;
+    runs[i] = fopen(file_name.c_str(), "r");
+  }
+  char temp_string[100];
+  int temp_term, temp_frequency;
+  // Read the first batch
+  for (int i = 0; i < runs.size(); ++i) {
+    for (int j = 0; j < read_size; ++j) {
+      if (fscanf(runs[i], "%d %s %d", &temp_term, temp_string,
+      &temp_frequency) <= 0) break;
+      string temp(temp_string);
+      TermDocumentFrequency temp_triple(temp_term, temp, temp_frequency);
+      pair<TermDocumentFrequency, int> temp_pair(temp_triple, i);
+      triples_left[i]++;
+      triples.push_back(temp_pair);
+    }
+  }
+  make_heap(triples.begin(), triples.end(), ComparePairTripleRun);
+  while (!triples.empty()) {
+    int run_number = triples[0].second;
+    // Output.
+    fprintf(output, "%d %s %d\n", triples[0].first.term(),
+    triples[0].first.document().c_str(), triples[0].first.frequency());
+    printf("%d %s %d\n", triples[0].first.term(),
+    triples[0].first.document().c_str(), triples[0].first.frequency());
+    
+    // Remove triple.
+    pop_heap(triples.begin(), triples.end(), ComparePairTripleRun);
+    triples.pop_back();
+
+    triples_left[run_number]--;
+    if (triples_left[run_number] == 0) {
+      // FIXME: Maybe make this a function somehow.
+      for (int i = 0; i < read_size; ++i) {
+        if (fscanf(runs[run_number], "%d %s %d", &temp_term, temp_string,
+        &temp_frequency) <= 0) break;
+        string temp(temp_string);
+        TermDocumentFrequency temp_triple(temp_term, temp, temp_frequency);
+        pair<TermDocumentFrequency, int> temp_pair(temp_triple, run_number);
+        triples_left[run_number]++;
+        triples.push_back(temp_pair);
+        push_heap(triples.begin(), triples.end(), ComparePairTripleRun);
+      }
+    } 
+  }
+
+  fclose(output);
+  for (int i = 0; i < runs.size(); ++i) {
+    fclose(runs[i]);
+  }
+
 }
 
 
@@ -58,13 +138,16 @@ const string& document, const int term_frequency) {
 }
 
 void InvertedIndex::PrintTriples() {
-  sort(triples_.begin(), triples_.end(), TermDocumentFrequency::CompareTriples);
-  for (int i = 0; i < triples_.size(); ++i) {
-    std::cout<< triples_[i].term() << " " << triples_[i].document() << " " <<
-    triples_[i].frequency() << std::endl;
+  unordered_map<string, int>::iterator it;
+  for (it = dictionary_.begin(); it != dictionary_.end(); ++it) {
+    cout<<it->first<<" "<<it->second<<endl;
   }
-  std::string oi = "ae manolos";
-  std::cout<< sizeof(char)<<std::endl;
+ /* triples_.sort(TermDocumentFrequency::CompareTriples);
+  list<TermDocumentFrequency>::iterator it;
+  for (it = triples_.begin(); it != triples_.end(); ++it) {
+    std::cout<< (*it).term() << " " << (*it).document() << " " <<
+    (*it).frequency() << std::endl;
+  }*/
 }
 
 //FIXME(make this be encoded, and maybe use fwrite and etc)
@@ -74,11 +157,13 @@ void InvertedIndex::WriteRunOnDisk(int run_number) {
   string file_name;
   stream >> file_name;
   file_name = "run" + file_name;
-  sort(triples_.begin(), triples_.end(), TermDocumentFrequency::CompareTriples);
+  triples_.sort(TermDocumentFrequency::CompareTriples);
   FILE *output = fopen(file_name.c_str(), "w");
-  for (int i = 0; i < triples_.size(); ++i) {
-    fprintf(output, "%d %s %d\n", triples_[i].term(),
-    triples_[i].document().c_str(), triples_[i].frequency());
+  list<TermDocumentFrequency>::iterator it;
+  for (it = triples_.begin(); it != triples_.end(); ++it) {
+    fprintf(output, "%d %s %d\n", (*it).term(), (*it).document().c_str(),
+    (*it).frequency());
   }
   triples_.clear();
+  fclose(output);
 }

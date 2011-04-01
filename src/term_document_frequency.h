@@ -8,6 +8,9 @@ using namespace std;
 // f(d,t) --> frequency of t in d.
 class TermDocumentFrequency {
  public: 
+  // Default constructor - does nothing.
+  TermDocumentFrequency();
+
   // Constructor
   TermDocumentFrequency(const int term, const string& document,
   const int frequency);

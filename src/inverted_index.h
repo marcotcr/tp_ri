@@ -9,7 +9,6 @@
 #include "./term_document_frequency.h"
 using namespace RICPNS;
 
-
 const int MAXIMUM_STRING_SIZE = 50;
 const long int AVAILABLE_MEMORY = 41943040; // 40 MegaBytes
 
@@ -19,13 +18,11 @@ class InvertedIndex {
  public:
   typedef unordered_map<string, int> TermFrequencyMap;
 
-  // Default constructor - does nothing
+  // Default constructor - initializes variables.
   InvertedIndex();
 
   // Initializes and constructs the inverted index. Uses the output file as
   // final output.
-  // FIXME: I need the document names. Maybe make document_list be a list of
-  // documents instead of strings.
   void Init(const string& output_file, const list<Document>& document_list);
   void PrintTriples();
   
@@ -38,7 +35,9 @@ class InvertedIndex {
   // t --> term (this is the term's id),
   // d --> document,
   // f(d,t) --> frequency of t in d.
-  vector<TermDocumentFrequency> triples_;
+  list<TermDocumentFrequency> triples_;
+
+  int number_of_runs_;
 
   // Parses a document into index terms. Fills an unordered_map of index terms
   // related to their frequency in the document. If an index term is not present
@@ -50,6 +49,13 @@ class InvertedIndex {
   // triples.
   void ProcessIndexTerm(const string& index_term,
   const string& document, const int term_frequency);
+
+  // Processes the list of documents, writing runs to disk whenever the number
+  // of triples threatens the memory capacity.
+  void ProcessDocumentList(const list<Document>& document_list);
+
+  // Merges the runs into the output file, fully sorted.
+  void MergeRuns(const string& output_file);
 
   // Sorts and writes a run to disk. Will write on file named run%d, %d being
   // the first parameter. Will also clear the triples_ vector.
