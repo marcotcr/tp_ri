@@ -7,7 +7,12 @@ InvertedIndex::InvertedIndex(): number_of_runs_(0) {
 void InvertedIndex::Init(const string& output_file,
 const list<Document>& document_list) {
   this->ProcessDocumentList(document_list);
-  this->MergeRuns(output_file);
+  string temporary_file = "temp_file";
+  this->MergeRuns(temporary_file);
+  this->RemoveTemporaryRuns();
+  this->MakeIndex(temporary_file, output_file);
+  string vocabulary_file = "vocabulary";
+  this->WriteVocabulary(vocabulary_file);
 }
 
 void InvertedIndex::ProcessDocumentList(const list<Document>& document_list) {
@@ -27,11 +32,11 @@ void InvertedIndex::ProcessDocumentList(const list<Document>& document_list) {
     for (it2 = index_terms.begin(); it2 != index_terms.end(); ++it2) {
       this->ProcessIndexTerm(it2->first, (*it).getURL(), it2->second);
       // This is the size of the map structure plus the size of the elements.
-      int size_of_dictionary = sizeof(dictionary_) + dictionary_.size() *
+      int size_of_vocabulary = sizeof(vocabulary_) + vocabulary_.size() *
       (MAXIMUM_STRING_SIZE + sizeof(int));
-      //maximum_number_of_triples = (AVAILABLE_MEMORY - size_of_dictionary)/
+      //maximum_number_of_triples = (AVAILABLE_MEMORY - size_of_vocabulary)/
       //size_of_triple;
-      maximum_number_of_triples = 7;
+      maximum_number_of_triples = 5;
       if (maximum_number_of_triples <= triples_.size()) {
         this->WriteRunOnDisk(number_of_runs_++);
       }
@@ -117,15 +122,72 @@ void InvertedIndex::MergeRuns(const string& output_file) {
 
 }
 
+void InvertedIndex::RemoveTemporaryRuns() {
+  system("rm run*");
+}
+
+void InvertedIndex::MakeIndex(const string& temporary_file,
+const string& output) {
+  FILE* temp_file = fopen(temporary_file.c_str(), "r");
+  FILE* output_file = fopen(output.c_str(), "w");
+  int current_term = 1;
+  int number_of_documents = 0;
+  char temp_string[100];
+  int term, frequency;
+  list< pair<string, int> > document_frequency;
+  // FIXME: This has to be done better.
+  while ( fscanf(temp_file, "%d %s %d", &term, temp_string, &frequency) == 3) {
+    if (term != current_term) {
+      fprintf(output_file, "%d %d ", current_term, number_of_documents); 
+      std::list< pair<string, int> >::iterator it;
+      for (it = document_frequency.begin(); it != document_frequency.end();
+      ++it) {
+        // This is printing an extra space in the end of the line.
+        fprintf(output_file, "%s %d ", (*it).first.c_str(), (*it).second);
+      }
+      fprintf(output_file, "\n");
+      document_frequency.clear();
+      current_term = term;
+      number_of_documents = 0;
+    }
+    string document(temp_string);
+    pair<string, int> temp_document_frequency(document, frequency);
+    document_frequency.push_back(temp_document_frequency);
+    number_of_documents++;
+  }
+
+  // Print the last one.
+  fprintf(output_file, "%d %d ", current_term, number_of_documents); 
+  std::list< pair<string, int> >::iterator it;
+  for (it = document_frequency.begin(); it != document_frequency.end();
+  ++it) {
+    // This is printing an extra space in the end of the line.
+    fprintf(output_file, "%s %d ", (*it).first.c_str(), (*it).second);
+  }
+  fprintf(output_file, "\n");
+  document_frequency.clear();
+
+  fclose(temp_file);
+  fclose(output_file);
+}
+
+void InvertedIndex::WriteVocabulary(const string& file_name) {
+  FILE* file = fopen(file_name.c_str(), "w");
+  unordered_map<string, int>::iterator it;
+  for (it = vocabulary_.begin(); it != vocabulary_.end(); ++it) {
+    fprintf(file, "%s %d\n", it->first.c_str(), it->second);
+  }
+  fclose(file);
+}
 
 void InvertedIndex::ParseIntoIndexTerms(const string& document,
 TermFrequencyMap* index_terms) {
   list<string> terms = Util::SeparateIntoWords(document);
   list<string>::iterator it;
   for (it = terms.begin(); it != terms.end(); ++it) {
-    if (dictionary_.count(*it) == 0) {
+    if (vocabulary_.count(*it) == 0) {
      // Only allow for MAXIMUM_STRING_SIZE characters max for each word.
-     dictionary_[(*it).substr(0,MAXIMUM_STRING_SIZE)] = dictionary_.size();
+     vocabulary_[(*it).substr(0,MAXIMUM_STRING_SIZE)] = vocabulary_.size();
     }
     (*index_terms)[(*it).substr(0,MAXIMUM_STRING_SIZE)]++;
   }
@@ -133,13 +195,13 @@ TermFrequencyMap* index_terms) {
 
 void InvertedIndex::ProcessIndexTerm(const string& index_term,
 const string& document, const int term_frequency) {
-  TermDocumentFrequency temp(dictionary_[index_term], document, term_frequency);
+  TermDocumentFrequency temp(vocabulary_[index_term], document, term_frequency);
   triples_.push_back(temp);
 }
 
 void InvertedIndex::PrintTriples() {
   unordered_map<string, int>::iterator it;
-  for (it = dictionary_.begin(); it != dictionary_.end(); ++it) {
+  for (it = vocabulary_.begin(); it != vocabulary_.end(); ++it) {
     cout<<it->first<<" "<<it->second<<endl;
   }
  /* triples_.sort(TermDocumentFrequency::CompareTriples);
@@ -151,7 +213,7 @@ void InvertedIndex::PrintTriples() {
 }
 
 //FIXME(make this be encoded, and maybe use fwrite and etc)
-void InvertedIndex::WriteRunOnDisk(int run_number) {
+void InvertedIndex::WriteRunOnDisk(const int run_number) {
   stringstream stream;
   stream << run_number;
   string file_name;

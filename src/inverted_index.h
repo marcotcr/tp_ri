@@ -1,9 +1,17 @@
+// Copyright 2011 Marco Ribeiro
+// Author: Marco Ribeiro
+// E-mail: marcotcr@gmail.com
+
+#ifndef INVERTED_INDEX_H
+#define INVERTED_INDEX_H
+
 #include <iostream>
 #include <string>
 #include <list>
 #include <tr1/unordered_map>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
 #include "./util.h"
 #include "./Document.h"
 #include "./term_document_frequency.h"
@@ -28,8 +36,8 @@ class InvertedIndex {
   
  
  private:
-  // unordered_maps a term to its id.
-  unordered_map<string, int> dictionary_;
+  // Maps a term to its id.
+  unordered_map<string, int> vocabulary_;
 
   // Array of triples. A triple (t, d, f(d,t)) is:
   // t --> term (this is the term's id),
@@ -57,8 +65,21 @@ class InvertedIndex {
   // Merges the runs into the output file, fully sorted.
   void MergeRuns(const string& output_file);
 
+  // Removes the temporary run files from the disk
+  void RemoveTemporaryRuns();
+
+  // Transforms the temporary file in an index file. The index file has the
+  // format:
+  // term_id number_of_documents document1 frequency1 document2 frequency2...
+  void MakeIndex(const string& temporary_file,const string& output);
+  
+  // Writes the vocabulary to a file.
+  void WriteVocabulary(const string& file_name);
+
   // Sorts and writes a run to disk. Will write on file named run%d, %d being
   // the first parameter. Will also clear the triples_ vector.
-  void WriteRunOnDisk(int run_number);
+  void WriteRunOnDisk(const int run_number);
 
 };
+
+#endif // INVERTED_INDEX_H

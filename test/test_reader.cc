@@ -10,6 +10,7 @@
 #include "./util.h"
 #include "./CollectionReader.h"
 #include "./inverted_index.h"
+#include "./query_processor.h"
 
 using namespace RICPNS;
 using namespace htmlcxx;
@@ -83,6 +84,19 @@ int main(int argc, char** argv) {
   std::string output_file = "output";
   InvertedIndex oi;
   oi.Init(output_file, document_list);
+  QueryProcessor ola;
+  string query;
+  printf("Digite o termo que você deseja buscar:\n");
+  cin >> query;
+  string vocabulary_file = "vocabulary";
+  ola.Init(output_file, vocabulary_file); 
+  list<string> documents = ola.ProcessQuery(query);
+  list<string>::iterator it;
+  printf("Documentos com a palavra %s:\n", query.c_str());
+  for (it = documents.begin(); it != documents.end(); ++it) {
+    cout<< *it << endl;
+    
+  }
 //  oi.PrintTriples();
 
 }
