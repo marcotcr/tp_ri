@@ -62,26 +62,28 @@ int main(int argc, char** argv) {
   return EXIT_SUCCESS;*/
   std::list<Document> document_list;
   Document teste;
-  teste.setURL("1");
+  teste.setURL("url1");
   teste.setText("Pease porridge hot, pease porridge cold,");
   document_list.push_back(teste);
-  teste.setURL("2");
+  teste.setURL("url2");
   teste.setText("Pease porridge in the pot,");
   document_list.push_back(teste);
-  teste.setURL("3");
+  teste.setURL("url3");
   teste.setText("Nine days old.");
   document_list.push_back(teste);
-  teste.setURL("4");
+  teste.setURL("url4");
   teste.setText("Some like it hot, some like it cold,");
   document_list.push_back(teste);
-  teste.setURL("5");
+  teste.setURL("url5");
   teste.setText("Some like it in the pot,");
   document_list.push_back(teste);
-  teste.setURL("6");
+  teste.setURL("url6");
   teste.setText("Nine days old.");
   document_list.push_back(teste);
-
+  //FIXME
+  system ("rm document_url");
   std::string output_file = "output";
+  string document_url_file = "document_url";
   InvertedIndex oi;
   oi.Init(output_file, document_list);
   QueryProcessor ola;
@@ -89,7 +91,7 @@ int main(int argc, char** argv) {
   printf("Digite o termo que você deseja buscar:\n");
   cin >> query;
   string vocabulary_file = "vocabulary";
-  ola.Init(output_file, vocabulary_file); 
+  ola.Init(output_file, vocabulary_file, document_url_file); 
   list<string> documents = ola.ProcessQuery(query);
   list<string>::iterator it;
   printf("Documentos com a palavra %s:\n", query.c_str());

@@ -12,14 +12,14 @@ class TermDocumentFrequency {
   TermDocumentFrequency();
 
   // Constructor
-  TermDocumentFrequency(const int term, const string& document,
+  TermDocumentFrequency(const int term, const int document,
   const int frequency);
   
   // Returns the term's id
   int term() const;
 
   // Returns the document's identifier.
-  string document() const;
+  int document() const;
 
   // Returns the frequency.
   int frequency() const;
@@ -31,6 +31,6 @@ class TermDocumentFrequency {
 
  private:
   int term_;
-  string document_;
+  int document_;
   int frequency_;
 };

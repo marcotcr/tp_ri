@@ -3,7 +3,7 @@
 TermDocumentFrequency::TermDocumentFrequency() {
 }
 
-TermDocumentFrequency::TermDocumentFrequency(const int term,const string&
+TermDocumentFrequency::TermDocumentFrequency(const int term,const int
 document,const int frequency):
 term_(term), document_(document), frequency_(frequency) {
 }
@@ -12,7 +12,7 @@ int TermDocumentFrequency::term() const {
   return term_;
 }
 
-string TermDocumentFrequency::document() const {
+int TermDocumentFrequency::document() const {
   return document_;
 }
 

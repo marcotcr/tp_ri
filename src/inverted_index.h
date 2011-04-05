@@ -36,8 +36,13 @@ class InvertedIndex {
   
  
  private:
+  // Keeps track of document ids.
+  int current_document_id_;
   // Maps a term to its id.
   unordered_map<string, int> vocabulary_;
+
+  // Maps a document id to it's URL
+  unordered_map<int, string> document_url_;
 
   // Array of triples. A triple (t, d, f(d,t)) is:
   // t --> term (this is the term's id),
@@ -56,7 +61,7 @@ class InvertedIndex {
   // Processes an index term adding a record <t,d,f(d,t)> to the array of
   // triples.
   void ProcessIndexTerm(const string& index_term,
-  const string& document, const int term_frequency);
+  const int document, const int term_frequency);
 
   // Processes the list of documents, writing runs to disk whenever the number
   // of triples threatens the memory capacity.
@@ -79,6 +84,9 @@ class InvertedIndex {
   // Sorts and writes a run to disk. Will write on file named run%d, %d being
   // the first parameter. Will also clear the triples_ vector.
   void WriteRunOnDisk(const int run_number);
+
+  // Appends the relation id -> url to document list
+  void AppendDocumentUrlFile(const string& file_name);
 
 };
 
