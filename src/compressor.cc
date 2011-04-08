@@ -1,6 +1,6 @@
 #include "./compressor.h"
 
-void Compressor::ConvertToUnaryConvertToUnary(unsigned int integer,
+void Compressor::ConvertToUnary(unsigned int integer,
 unsigned char* output, int starting_bit) {
   int i;
   for (i = starting_bit; i < integer + starting_bit - 1; ++i) {

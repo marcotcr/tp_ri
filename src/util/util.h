@@ -17,7 +17,7 @@ using namespace std;
 // Aggregates useful static methods.
 class Util {
  public:
-  // Splits a string into a list of words.
+  // Splits a string into a list of words. Makes everything lowercase.
   static list<string> SeparateIntoWords(const string& text);
 
   // Returns true if string contains an html comment - false otherwise. The input

@@ -12,9 +12,11 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <cmath>
 #include "./util.h"
 #include "./Document.h"
 #include "./term_document_frequency.h"
+#include "./compressor.h"
 using namespace RICPNS;
 
 const int MAXIMUM_STRING_SIZE = 50;
@@ -29,9 +31,11 @@ class InvertedIndex {
   // Default constructor - initializes variables.
   InvertedIndex();
 
-  // Initializes and constructs the inverted index. Uses the output file as
-  // final output.
-  void Init(const string& output_file, const list<Document>& document_list);
+  // Initializes and constructs the inverted index. Writes everything in the
+  // appropriate files.
+  void Init(const list<Document>& document_list, const string& index_file,
+  const string& vocabulary_file, const string& inverted_file, const string&
+  document_url_file);
   void PrintTriples();
   
  
@@ -65,7 +69,8 @@ class InvertedIndex {
 
   // Processes the list of documents, writing runs to disk whenever the number
   // of triples threatens the memory capacity.
-  void ProcessDocumentList(const list<Document>& document_list);
+  void ProcessDocumentList(const list<Document>& document_list, const string&
+  document_url_file);
 
   // Merges the runs into the output file, fully sorted.
   void MergeRuns(const string& output_file);
@@ -73,17 +78,23 @@ class InvertedIndex {
   // Removes the temporary run files from the disk
   void RemoveTemporaryRuns();
 
-  // Transforms the temporary file in an index file. The index file has the
-  // format:
-  // term_id number_of_documents document1 frequency1 document2 frequency2...
-  void MakeIndex(const string& temporary_file,const string& output);
+  // Transforms the temporary file in an inverted and an index file. 
+  // The index file has the format:
+  // term_id position_in_the_inverted_file size in bytes
+  // The inverted file is compressed using elias-gamma encoding, and the
+  // documents are represented as d-gaps. The format is (for a term):
+  // number_of_documents document_id frequency document_id frequency...
+  void MakeIndex(const string& temporary_file,const string& inverted_file,
+  const string& index_file);
   
   // Writes the vocabulary to a file.
   void WriteVocabulary(const string& file_name);
 
   // Sorts and writes a run to disk. Will write on file named run%d, %d being
   // the first parameter. Will also clear the triples_ vector.
-  void WriteRunOnDisk(const int run_number);
+  // Will print a map of document_urls in the file pointed by the second
+  // parameter.
+  void WriteRunOnDisk(const int run_number, const string& document_url_file);
 
   // Appends the relation id -> url to document list
   void AppendDocumentUrlFile(const string& file_name);

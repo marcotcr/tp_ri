@@ -4,18 +4,19 @@
 InvertedIndex::InvertedIndex(): number_of_runs_(0), current_document_id_(1) {
 }
 
-void InvertedIndex::Init(const string& output_file,
-const list<Document>& document_list) {
-  this->ProcessDocumentList(document_list);
+void InvertedIndex::Init(const list<Document>& document_list,
+const string& index_file, const string& vocabulary_file,
+const string& inverted_file, const string& document_url_file) {
+  this->ProcessDocumentList(document_list, document_url_file);
   string temporary_file = "temp_file";
   this->MergeRuns(temporary_file);
   this->RemoveTemporaryRuns();
-  this->MakeIndex(temporary_file, output_file);
-  string vocabulary_file = "vocabulary";
+  this->MakeIndex(temporary_file, inverted_file, index_file);
   this->WriteVocabulary(vocabulary_file);
 }
 
-void InvertedIndex::ProcessDocumentList(const list<Document>& document_list) {
+void InvertedIndex::ProcessDocumentList(const list<Document>& document_list,
+const string& document_url_file) {
   // It contains a string, so its size must be added by MAXIMUM_STRING_SIZE.
   int size_of_triple = sizeof(TermDocumentFrequency);
   // This is approximate, so be careful.
@@ -44,13 +45,13 @@ void InvertedIndex::ProcessDocumentList(const list<Document>& document_list) {
       //size_of_triple;
       maximum_number_of_triples = 5;
       if (maximum_number_of_triples <= triples_.size()) {
-        this->WriteRunOnDisk(number_of_runs_++);
+        this->WriteRunOnDisk(number_of_runs_++, document_url_file);
       }
     }
     index_terms.clear();
   }
   if (!triples_.empty()) {
-    this->WriteRunOnDisk(number_of_runs_++);
+    this->WriteRunOnDisk(number_of_runs_++, document_url_file);
   }
 }
 // This is used to compair a pair triple, run.
@@ -97,8 +98,8 @@ void InvertedIndex::MergeRuns(const string& output_file) {
     // Output.
     fprintf(output, "%d %d %d\n", triples[0].first.term(),
     triples[0].first.document(), triples[0].first.frequency());
-    printf("%d %d %d\n", triples[0].first.term(),
-    triples[0].first.document(), triples[0].first.frequency());
+    //printf("%d %d %d\n", triples[0].first.term(),
+    //triples[0].first.document(), triples[0].first.frequency());
     
     // Remove triple.
     pop_heap(triples.begin(), triples.end(), ComparePairTripleRun);
@@ -132,48 +133,124 @@ void InvertedIndex::RemoveTemporaryRuns() {
 }
 
 void InvertedIndex::MakeIndex(const string& temporary_file,
-const string& output) {
+const string& inverted_file, const string& index_file) {
   FILE* temp_file = fopen(temporary_file.c_str(), "r");
-  FILE* output_file = fopen(output.c_str(), "w");
+  FILE* inverted = fopen(inverted_file.c_str(), "w");
+  FILE* index = fopen(index_file.c_str(), "w");
   int current_term = 1;
   int number_of_documents = 0;
-  char temp_string[100];
-  int term, frequency;
-  list< pair<string, int> > document_frequency;
+  unsigned char temp_string[1000] = {0};
+  int position = 0;
+  int bytes = 0;
+  int bits = 0;
+  int previous;
+  int size;
+  int term, frequency, document;
+  list< pair<int, int> > document_frequency;
   // FIXME: This has to be done better.
-  while ( fscanf(temp_file, "%d %s %d", &term, temp_string, &frequency) == 3) {
+  while ( fscanf(temp_file, "%d %d %d", &term, &document, &frequency) == 3) {
     if (term != current_term) {
-      fprintf(output_file, "%d %d ", current_term, number_of_documents); 
-      std::list< pair<string, int> >::iterator it;
+      size = 0;
+      previous = 0;
+      bytes = 0;
+      bits = 0;
+
+      Compressor::ConvertToEliasGamma(number_of_documents, &temp_string[bytes],
+      bits);
+      //printf("NDOCS: %d ",number_of_documents);
+      bits += 1 + 2 * floor(log2(number_of_documents));
+      bytes += bits / 8;
+      bits = bits % 8;
+
+      std::list< pair<int, int> >::iterator it;
       for (it = document_frequency.begin(); it != document_frequency.end();
       ++it) {
-        // This is printing an extra space in the end of the line.
-        fprintf(output_file, "%s %d ", (*it).first.c_str(), (*it).second);
+        unsigned int gap = (*it).first - previous;
+        Compressor::ConvertToEliasGamma(gap, &temp_string[bytes], bits);
+        //printf(" GAP: %d ",gap);
+        bits += 1 + 2 * floor(log2(gap));
+        bytes += bits / 8;
+        bits = bits % 8;
+        Compressor::ConvertToEliasGamma((*it).second, &temp_string[bytes],
+        bits);
+        //printf(" Frequencia: %d\n", (*it).second);
+        bits += 1 + 2 * floor(log2((*it).second));
+        bytes += bits / 8;
+        bits = bits % 8;
+        if (bits == 0) {
+          for (int i = 0; i < bytes; ++i) {
+            fputc(temp_string[i], inverted);
+            //printf("%d\n",temp_string[i]);
+            temp_string[i] = 0;
+            size++;
+          }
+          bytes = 0;
+        }
+        previous = (*it).first;
       }
-      fprintf(output_file, "\n");
+      if (bits > 0) bytes++;
+      for (int i = 0; i < bytes; ++i) {
+        fputc(temp_string[i], inverted);
+        //printf("%d\n",temp_string[i]);
+        size++;
+      }
+      fprintf(index, "%d %d %d\n", current_term, position, size);
+      position += size;
       document_frequency.clear();
       current_term = term;
       number_of_documents = 0;
     }
-    string document(temp_string);
-    pair<string, int> temp_document_frequency(document, frequency);
+    pair<int, int> temp_document_frequency(document, frequency);
     document_frequency.push_back(temp_document_frequency);
     number_of_documents++;
   }
 
   // Print the last one.
-  fprintf(output_file, "%d %d ", current_term, number_of_documents); 
-  std::list< pair<string, int> >::iterator it;
+  size = 0;
+  previous = 0;
+  bytes = 0;
+  bits = 0;
+
+  Compressor::ConvertToEliasGamma(number_of_documents, &temp_string[bytes],
+  bits);
+  bits += 1 + 2 * floor(log2(number_of_documents));
+  bytes += bits / 8;
+  bits = bits % 8;
+
+  std::list< pair<int, int> >::iterator it;
   for (it = document_frequency.begin(); it != document_frequency.end();
   ++it) {
-    // This is printing an extra space in the end of the line.
-    fprintf(output_file, "%s %d ", (*it).first.c_str(), (*it).second);
+    unsigned int gap = (*it).first - previous;
+    Compressor::ConvertToEliasGamma(gap, &temp_string[bytes], bits);
+    bits += 1 + 2 * floor(log2(gap));
+    bytes += bits / 8;
+    bits = bits % 8;
+    Compressor::ConvertToEliasGamma((*it).second, &temp_string[bytes],
+    bits);
+    bits += 1 + 2 * floor(log2((*it).second));
+    bytes += bits / 8;
+    bits = bits % 8;
+    if (bits == 0) {
+      for (int i = 0; i < bytes; ++i) {
+        fputc(temp_string[i], inverted);
+        temp_string[i] = 0;
+        size++;
+      }
+      bytes = 0;
+    }
+    previous = (*it).first;
   }
-  fprintf(output_file, "\n");
+  if (bits > 0) bytes++;
+  for (int i = 0; i < bytes; ++i) {
+    fputc(temp_string[i], inverted);
+    size++;
+  }
+  fprintf(index, "%d %d %d\n", current_term, position, size);
   document_frequency.clear();
 
   fclose(temp_file);
-  fclose(output_file);
+  fclose(inverted);
+  fclose(index);
 }
 
 void InvertedIndex::WriteVocabulary(const string& file_name) {
@@ -218,7 +295,8 @@ void InvertedIndex::PrintTriples() {
 }
 
 //FIXME(make this be encoded, and maybe use fwrite and etc)
-void InvertedIndex::WriteRunOnDisk(const int run_number) {
+void InvertedIndex::WriteRunOnDisk(const int run_number,
+const string& document_url_file) {
   stringstream stream;
   stream << run_number;
   string file_name;
@@ -234,9 +312,7 @@ void InvertedIndex::WriteRunOnDisk(const int run_number) {
   triples_.clear();
   fclose(output);
   
-  //FIXME
-  file_name = "document_url";
-  this->AppendDocumentUrlFile(file_name);
+  this->AppendDocumentUrlFile(document_url_file);
   document_url_.clear();
 }
 

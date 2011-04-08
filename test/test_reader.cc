@@ -83,15 +83,17 @@ int main(int argc, char** argv) {
   //FIXME
   system ("rm document_url");
   std::string output_file = "output";
-  string document_url_file = "document_url";
   InvertedIndex oi;
-  oi.Init(output_file, document_list);
+  string index_file = "index";
+  string vocabulary_file = "vocabulary";
+  string document_url_file =  "document_url";
+  oi.Init(document_list, index_file, vocabulary_file, output_file,
+  document_url_file);
   QueryProcessor ola;
   string query;
-  printf("Digite o termo que você deseja buscar:\n");
-  cin >> query;
-  string vocabulary_file = "vocabulary";
-  ola.Init(output_file, vocabulary_file, document_url_file); 
+  ola.Init(output_file, index_file,vocabulary_file, document_url_file); 
+  printf("Digite a consulta que você deseja buscar:\n");
+  getline(cin, query);
   list<string> documents = ola.ProcessQuery(query);
   list<string>::iterator it;
   printf("Documentos com a palavra %s:\n", query.c_str());
