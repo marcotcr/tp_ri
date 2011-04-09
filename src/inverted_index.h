@@ -13,10 +13,12 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <htmlcxx/html/ParserDom.h>
 #include "./util.h"
 #include "./Document.h"
 #include "./term_document_frequency.h"
 #include "./compressor.h"
+#include "./CollectionReader.h"
 using namespace RICPNS;
 
 const int MAXIMUM_STRING_SIZE = 50;
@@ -28,8 +30,9 @@ class InvertedIndex {
  public:
   typedef unordered_map<string, int> TermFrequencyMap;
 
-  // Default constructor - initializes variables.
-  InvertedIndex();
+  // Default constructor - initializes variables. Receives as parameters the
+  // directory where the data is and the index file to the document collection.
+  InvertedIndex(const string& input_directory, const string& index_filename);
 
   // Initializes and constructs the inverted index. Writes everything in the
   // appropriate files.
@@ -53,6 +56,9 @@ class InvertedIndex {
   // d --> document,
   // f(d,t) --> frequency of t in d.
   list<TermDocumentFrequency> triples_;
+
+  // This is used to read the data collection.
+  RICPNS::CollectionReader* reader;
 
   int number_of_runs_;
 

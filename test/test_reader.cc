@@ -17,9 +17,9 @@ using namespace htmlcxx;
 
 int main(int argc, char** argv) {
 
- /* std::string input_directory("./");
+  std::string input_directory("./");
   std::string index_filename("indexToCompressedColection.txt");
-  CollectionReader * reader = new CollectionReader(input_directory,
+ /* CollectionReader * reader = new CollectionReader(input_directory,
                               index_filename);
   Document doc;
   doc.clear();
@@ -63,27 +63,27 @@ int main(int argc, char** argv) {
   std::list<Document> document_list;
   Document teste;
   teste.setURL("url1");
-  teste.setText("Pease porridge hot, pease porridge cold,");
+  teste.setText("Pease porridge hot, pease porridge cold, oi");
   document_list.push_back(teste);
   teste.setURL("url2");
-  teste.setText("Pease porridge in the pot,");
+  teste.setText("Pease porridge in the pot,oi");
   document_list.push_back(teste);
   teste.setURL("url3");
-  teste.setText("Nine days old.");
+  teste.setText("Nine days old.oi");
   document_list.push_back(teste);
   teste.setURL("url4");
-  teste.setText("Some like it hot, some like it cold,");
+  teste.setText("Some like it hot, some like it cold,oi");
   document_list.push_back(teste);
   teste.setURL("url5");
-  teste.setText("Some like it in the pot,");
+  teste.setText("Some like it in the pot,oi");
   document_list.push_back(teste);
   teste.setURL("url6");
-  teste.setText("Nine days old.");
+  teste.setText("Nine days old.oi");
   document_list.push_back(teste);
   //FIXME
-  system ("rm document_url");
+  //system ("rm document_url");
   std::string output_file = "output";
-  InvertedIndex oi;
+  InvertedIndex oi(input_directory, index_filename);
   string index_file = "index";
   string vocabulary_file = "vocabulary";
   string document_url_file =  "document_url";

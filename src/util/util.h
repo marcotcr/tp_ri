@@ -11,8 +11,11 @@
 #include <cstdio>
 #include <cstring>
 
+#include <htmlcxx/html/ParserDom.h>
+
 #define SEPARATORS " \n\t\v\r.,:;?!()[]#=+-_|/<>\"\'"
 using namespace std;
+using namespace htmlcxx;
 
 // Aggregates useful static methods.
 class Util {
@@ -22,10 +25,13 @@ class Util {
 
   // Returns true if string contains an html comment - false otherwise. The input
   // string for this function must be one returned by htmlcxx functions.
-  static bool IsHTMLComment(string text);
+  static bool IsHTMLComment(const string& text);
 
   // Converts a string to lowercase.
   static void StringToLowerCase(string *text);
+
+  // Parses an html file using htmlcxx and returns a string with the text.
+  static string ParseHTMLdocument(const string& document);
  private:
   Util();
 };

@@ -21,7 +21,7 @@ list<string> Util::SeparateIntoWords(const string& text) {
   return output;
 }
 
-bool Util::IsHTMLComment(string text) {
+bool Util::IsHTMLComment(const string& text) {
   string comment = "<!--";
   if (text.find(comment) != string::npos)
     return true;
@@ -33,4 +33,22 @@ void Util::StringToLowerCase(string *text) {
   for (int i = 0; i < (*text).length(); ++i) {
     (*text)[i] = tolower((*text)[i]);
   }
+}
+
+string Util::ParseHTMLdocument(const string& document) {
+  string output;
+
+  HTML::ParserDom parser;
+  tree<HTML::Node> dom = parser.parseTree(document);
+  tree<HTML::Node>::iterator it;
+  for (it = dom.begin(); it != dom.end(); ++it) {
+    if ((!it->isTag()) &&
+    (!it->isComment()) &&
+    (!Util::IsHTMLComment(it->text())))  {
+      output.append(" ");
+      output.append(it->text());
+    }
+  }
+  return output;
+  
 }

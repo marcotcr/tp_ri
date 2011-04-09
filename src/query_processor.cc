@@ -10,13 +10,15 @@ QueryProcessor::QueryProcessor() {
 void QueryProcessor::Init(const string& inverted_file, const string& index_file,
 const string& vocabulary_file, const string& document_url_file) {
   FILE* vocabulary = fopen(vocabulary_file.c_str(), "r");
-  char temp_string[100];
+  char temp_string[1000];
+  string oi;
   int temp_id;
   while (fscanf(vocabulary, "%s %d", temp_string, &temp_id) == 2) {
     string temp(temp_string);
     vocabulary_[temp] = temp_id;
   }
   fclose(vocabulary);
+  
   int term, position, size;
   FILE* index = fopen(index_file.c_str(), "r");
   while (fscanf(index, "%d %d %d", &term, &position, &size) == 3) {
@@ -24,6 +26,7 @@ const string& vocabulary_file, const string& document_url_file) {
     index_[term] = temp_pair;
   }
   fclose(index);
+  
   FILE* document_url = fopen(document_url_file.c_str(), "r");
   while (fscanf(document_url, "%d %s", &temp_id, temp_string) == 2) {
     string temp(temp_string);

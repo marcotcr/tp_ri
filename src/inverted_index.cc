@@ -1,7 +1,9 @@
 #include "./inverted_index.h"
 #include <sstream>
 
-InvertedIndex::InvertedIndex(): number_of_runs_(0), current_document_id_(1) {
+InvertedIndex::InvertedIndex(const string& input_directory,
+const string& index_filename): number_of_runs_(0), current_document_id_(1) {
+  reader = new CollectionReader(input_directory, index_filename);
 }
 
 void InvertedIndex::Init(const list<Document>& document_list,
@@ -23,27 +25,28 @@ const string& document_url_file) {
   int maximum_number_of_triples;
   int number_of_runs = 0;
 
-
   TermFrequencyMap index_terms;
-  for (list<Document>::const_iterator it = document_list.begin();
-  it != document_list.end(); ++it) {
-    this->ParseIntoIndexTerms((*it).getText(), &index_terms);
-    TermFrequencyMap::iterator it2;
+  Document document;
+  document.clear();
+  while(reader->getNextDocument(document)) {
+    this->ParseIntoIndexTerms(Util::ParseHTMLdocument(document.getText()),
+    &index_terms);
+    TermFrequencyMap::iterator it;
 
     // FIXME: Think about removing equal URLS.
-    document_url_[current_document_id_] = (*it).getURL();
-    int document = current_document_id_++;
+    document_url_[current_document_id_] = document.getURL();
+    int document_id = current_document_id_++;
 
-    for (it2 = index_terms.begin(); it2 != index_terms.end(); ++it2) {
+    for (it = index_terms.begin(); it != index_terms.end(); ++it) {
 
        
-      this->ProcessIndexTerm(it2->first, document, it2->second);
+      this->ProcessIndexTerm(it->first, document_id, it->second);
       // This is the size of the map structure plus the size of the elements.
       int size_of_vocabulary = sizeof(vocabulary_) + vocabulary_.size() *
       (MAXIMUM_STRING_SIZE + sizeof(int));
       //maximum_number_of_triples = (AVAILABLE_MEMORY - size_of_vocabulary)/
       //size_of_triple;
-      maximum_number_of_triples = 5;
+      maximum_number_of_triples = 5000;
       if (maximum_number_of_triples <= triples_.size()) {
         this->WriteRunOnDisk(number_of_runs_++, document_url_file);
       }
@@ -53,7 +56,9 @@ const string& document_url_file) {
   if (!triples_.empty()) {
     this->WriteRunOnDisk(number_of_runs_++, document_url_file);
   }
+
 }
+
 // This is used to compair a pair triple, run.
 bool ComparePairTripleRun(const pair<TermDocumentFrequency, int>& a,
 const pair<TermDocumentFrequency, int>& b) {
@@ -147,6 +152,7 @@ const string& inverted_file, const string& index_file) {
   int size;
   int term, frequency, document;
   list< pair<int, int> > document_frequency;
+  //FILE *compara = fopen("compara", "w");
   // FIXME: This has to be done better.
   while ( fscanf(temp_file, "%d %d %d", &term, &document, &frequency) == 3) {
     if (term != current_term) {
@@ -154,6 +160,7 @@ const string& inverted_file, const string& index_file) {
       previous = 0;
       bytes = 0;
       bits = 0;
+      //fprintf(compara,"%d %d ",current_term, number_of_documents);
 
       Compressor::ConvertToEliasGamma(number_of_documents, &temp_string[bytes],
       bits);
@@ -165,6 +172,7 @@ const string& inverted_file, const string& index_file) {
       std::list< pair<int, int> >::iterator it;
       for (it = document_frequency.begin(); it != document_frequency.end();
       ++it) {
+        //fprintf(compara, "%d %d ", it->first, it->second);
         unsigned int gap = (*it).first - previous;
         Compressor::ConvertToEliasGamma(gap, &temp_string[bytes], bits);
         //printf(" GAP: %d ",gap);
@@ -199,6 +207,10 @@ const string& inverted_file, const string& index_file) {
       document_frequency.clear();
       current_term = term;
       number_of_documents = 0;
+      //fprintf(compara, "\n");
+    }
+    if (term == 1 && document == 34 && frequency == 1) {
+      cout<< "OLHA EU AQUI"<<endl;
     }
     pair<int, int> temp_document_frequency(document, frequency);
     document_frequency.push_back(temp_document_frequency);
