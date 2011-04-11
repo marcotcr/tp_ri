@@ -12,4 +12,4 @@ ADD_EXECUTABLE(teste test_reader ../src/inverted_index
 ../src/term_document_frequency ../src/query_processor ../src/compressor)
 
 # Link the executable to the necessary libraries.
-TARGET_LINK_LIBRARIES(teste RICPlib z htmlcxx util)
+TARGET_LINK_LIBRARIES(teste RICPlib z htmlcxx util iconv)

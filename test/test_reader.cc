@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
   teste.setText("Nine days old.oi");
   document_list.push_back(teste);
   //FIXME
-  //system ("rm document_url");
+  system ("rm document_url");
   std::string output_file = "output";
   InvertedIndex oi(input_directory, index_filename);
   string index_file = "index";
@@ -94,6 +94,7 @@ int main(int argc, char** argv) {
   ola.Init(output_file, index_file,vocabulary_file, document_url_file); 
   printf("Digite a consulta que você deseja buscar:\n");
   getline(cin, query);
+  //query = "javascript";
   list<string> documents = ola.ProcessQuery(query);
   list<string>::iterator it;
   printf("Documentos com a palavra %s:\n", query.c_str());

@@ -29,6 +29,8 @@ const string& document_url_file) {
   Document document;
   document.clear();
   while(reader->getNextDocument(document)) {
+    document.clear();
+    reader->getNextDocument(document);
     this->ParseIntoIndexTerms(Util::ParseHTMLdocument(document.getText()),
     &index_terms);
     TermFrequencyMap::iterator it;
@@ -46,7 +48,7 @@ const string& document_url_file) {
       (MAXIMUM_STRING_SIZE + sizeof(int));
       //maximum_number_of_triples = (AVAILABLE_MEMORY - size_of_vocabulary)/
       //size_of_triple;
-      maximum_number_of_triples = 5000;
+      maximum_number_of_triples = 500;
       if (maximum_number_of_triples <= triples_.size()) {
         this->WriteRunOnDisk(number_of_runs_++, document_url_file);
       }
@@ -66,7 +68,8 @@ const pair<TermDocumentFrequency, int>& b) {
 }
 void InvertedIndex::MergeRuns(const string& output_file) {
   // FIXME: This certainly needs to be fixed.
-  int read_size = 3;
+  // FIXME: Remember the maximum number of files taht can be opened. ulimit -S -n 2048
+  int read_size = 500;
 
   FILE* output = fopen(output_file.c_str(), "w");
   vector<FILE*> runs(number_of_runs_);
@@ -208,9 +211,6 @@ const string& inverted_file, const string& index_file) {
       current_term = term;
       number_of_documents = 0;
       //fprintf(compara, "\n");
-    }
-    if (term == 1 && document == 34 && frequency == 1) {
-      cout<< "OLHA EU AQUI"<<endl;
     }
     pair<int, int> temp_document_frequency(document, frequency);
     document_frequency.push_back(temp_document_frequency);
