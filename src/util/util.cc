@@ -4,21 +4,19 @@
 // This is a compendium of useful functions.
 
 #include "util.h"
-bool Util::diacritics_ready_ = 0;
-unordered_map<unsigned char, char> Util::diacritics_;
 
 list<string> Util::SeparateIntoWords(const string& text) {
-  string string_ = text;
-  Util::StringToLowerCase(&string_);
-  char temp_string[string_.size()];
-  strcpy(temp_string, string_.c_str());
+  char temp_string[text.size()];
+  strcpy(temp_string, text.c_str());
   char* temp_pointer = strtok(temp_string, SEPARATORS);
   list<string> output;
+  int i = 0;
   while (temp_pointer) {
     //printf("WORD:%s\n",temp_pointer);
     string temp(temp_pointer);
     output.push_back(temp);
     temp_pointer = strtok(NULL, SEPARATORS);
+    ++i;
   }
   return output;
 }
@@ -45,21 +43,24 @@ string Util::ParseHTMLdocument(const string& document) {
   if (temp.find("content-type: text") == string::npos) {
     return output;
   }
-  bool is_UTF8 = HTML::detect_utf8(document.c_str(), document.length());
+  bool is_UTF8 = HTML::detect_utf8(temp.c_str(), temp.length());
   HTML::ParserDom parser;
-  CharsetConverter converter("ISO-8859-1","ASCII//TRANSLIT");
-  string temporary = HTML::decode_entities(document);
-  temporary = Util::RemoveDiacritics(temporary);
+  CharsetConverter converter("ISO-8859-1","UTF-8");
+  string temporary = Util::DecodeEntities(temp);
   if (!is_UTF8) {
     temporary = converter.convert(temporary);
   }
   tree<HTML::Node> dom = parser.parseTree(temporary);
-  tree<HTML::Node>::iterator it;
-  for (it = dom.begin(); it != dom.end(); ++it) {
+  tree<HTML::Node>::iterator it = dom.begin();
+  // Ignore the html header.
+  ++it;
+  ++it;
+  for (; it != dom.end(); ++it) {
     // If this is a script tag, next it is going to be the script content, so
     // skip it.
     if (it->isTag() && it->tagName() == "script") {
       ++it;
+      if (it == dom.end()) break;
       continue;
     }
     if ((!it->isTag()) &&
@@ -76,60 +77,192 @@ string Util::ParseHTMLdocument(const string& document) {
 }
 
 
-void Util::InitDiacritics() {
-  if (diacritics_ready_ == 1) return;
-  diacritics_[192] = 'a';
-  diacritics_[193] = 'a';
-  diacritics_[194] = 'a';
-  diacritics_[195] = 'a';
-  diacritics_[196] = 'a';
-  diacritics_[197] = 'a';
-  diacritics_[199] = 'c';
-  diacritics_[200] = 'e';
-  diacritics_[201] = 'e';
-  diacritics_[202] = 'e';
-  diacritics_[203] = 'e';
-  diacritics_[204] = 'i';
-  diacritics_[205] = 'i';
-  diacritics_[206] = 'i';
-  diacritics_[210] = 'o';
-  diacritics_[211] = 'o';
-  diacritics_[212] = 'o';
-  diacritics_[213] = 'o';
-  diacritics_[217] = 'u';
-  diacritics_[218] = 'u';
-  diacritics_[219] = 'u';
-  diacritics_[224] = 'a';
-  diacritics_[225] = 'a';
-  diacritics_[226] = 'a';
-  diacritics_[227] = 'a';
-  diacritics_[231] = 'c';
-  diacritics_[232] = 'e';
-  diacritics_[232] = 'e';
-  diacritics_[233] = 'e';
-  diacritics_[234] = 'e';
-  diacritics_[236] = 'i';
-  diacritics_[237] = 'i';
-  diacritics_[238] = 'i';
-  diacritics_[242] = 'o';
-  diacritics_[243] = 'o';
-  diacritics_[244] = 'o';
-  diacritics_[245] = 'o';
-  diacritics_[246] = 'o';
-  diacritics_[249] = 'u';
-  diacritics_[250] = 'u';
-  diacritics_[251] = 'u';
-  diacritics_[252] = 'u';
-  diacritics_ready_ = 1;
+static struct {
+	const char *str;
+	char chr;
+} entities[] = {
+	/* 00 */
+	{ "quot", 34 },
+	{ "amp", 38 },
+	{ "lt", 60 },
+	{ "gt", 62 },
+	{ "nbsp", ' ' },
+	{ "iexcl", 161 },
+	{ "cent", 162 },
+	{ "pound", 163 },
+	{ "curren", 164 },
+	{ "yen", 165 },
+	/* 10 */
+	{ "brvbar", 166 },
+	{ "sect", 167 },
+	{ "uml", 168 },
+	{ "copy", 169 },
+	{ "ordf", 170 },
+	{ "laquo", 171 },
+	{ "not", 172 },
+	{ "shy", 173 },
+	{ "reg", 174 },
+	{ "macr", 175 },
+	/* 20 */
+	{ "deg", 176 },
+	{ "plusmn", 177 },
+	{ "sup2", 178 },
+	{ "sup3", 179 },
+	{ "acute", 180 },
+	{ "micro", 181 },
+	{ "para", 182 },
+	{ "middot", 183 },
+	{ "cedil", 184 },
+	{ "sup1", 185 },
+	/* 30 */
+	{ "ordm", 186 },
+	{ "raquo", 187 },
+	{ "frac14", 188 },
+	{ "frac12", 189 },
+	{ "frac34", 190 },
+	{ "iquest", 191 },
+	{ "Agrave", 'a' },
+	{ "Aacute", 'a' },
+	{ "Acirc", 'a' },
+	{ "Atilde", 'a' },
+	/* 40 */
+	{ "Auml", 'a' },
+	{ "ring", 'a' },
+	{ "AElig", 'a' },
+	{ "Ccedil", 'c' },
+	{ "Egrave", 'e' },
+	{ "Eacute", 'e' },
+	{ "Ecirc", 'e' },
+	{ "Euml", 'e' },
+	{ "Igrave", 'i' },
+	{ "Iacute", 'i' },
+	/* 50 */
+	{ "Icirc", 'i' },
+	{ "Iuml", 'i' },
+	{ "ETH", 208 },
+	{ "Ntilde", 'n' },
+	{ "Ograve", 'o' },
+	{ "Oacute", 'o' },
+	{ "Ocirc", 'o' },
+	{ "Otilde", 'o' },
+	{ "Ouml", 'o' },
+	{ "times", 215 },
+	/* 60 */
+	{ "Oslash", 'o' },
+	{ "Ugrave", 'u' },
+	{ "Uacute", 'u' },
+	{ "Ucirc", 'u' },
+	{ "Uuml", 'u' },
+	{ "Yacute", 'y' },
+	{ "THORN", 222 },
+	{ "szlig", 223 },
+	{ "agrave", 'a' },
+	{ "aacute", 'a' },
+	/* 70 */
+	{ "acirc", 'a' },
+	{ "atilde", 'a' },
+	{ "auml", 'a' },
+	{ "aring", 'a' },
+	{ "aelig", 'a' },
+	{ "ccedil", 'c' },
+	{ "egrave", 'e' },
+	{ "eacute", 'e' },
+	{ "ecirc", 'e' },
+	{ "euml", 'e' },
+	/* 80 */
+	{ "igrave", 'i' },
+	{ "iacute", 'i' },
+	{ "icirc", 'i' },
+	{ "iuml", 'i' },
+	{ "ieth", 'i' },
+	{ "ntilde", 'n' },
+	{ "ograve", 'o' },
+	{ "oacute", 'o' },
+	{ "ocirc", 'o' },
+	{ "otilde", 'o' },
+	/* 90 */
+	{ "ouml", 'o' },
+	{ "divide", 247 },
+	{ "oslash", 'o' },
+	{ "ugrave", 'u' },
+	{ "uacute", 'u' },
+	{ "ucirc", 'u' },
+	{ "uuml", 'u' },
+	{ "yacute", 'y' },
+	{ "thorn", 254 },
+	{ "yuml", 'y' },
+	/* 100 */
+	{ NULL, 0 },
+};
+
+string Util::DecodeEntities(const string &str)
+		{
+			unsigned int count = 0;
+			const char *ptr = str.c_str();
+			const char *end;
+
+			string ret(str);
+			string entity;
+
+			ptr = strchr(ptr, '&');
+			if (ptr == NULL) return ret;
+
+			count += static_cast<unsigned int>(ptr - str.c_str());
+
+//			printf("url_init: %s\n", str.c_str());
+			while (*ptr)
+			{
+				if (*ptr == '&' && ((end = strchr(ptr, ';')) != NULL))
+				{
+					entity.assign(ptr + 1, end);
+//					printf("Entity: %d %s\n", entity.length(), entity.c_str());
+					if (!entity.empty() && entity[0] == '#')
+					{
+						entity.erase(0, 1);
+						int chr = atoi(entity.c_str());
+						if (chr > 0 && chr <= UCHAR_MAX)
+						{
+							ret[count++] = chr;
+						}
+						ptr = end + 1;
+					}
+					else
+					{
+						bool found = false;
+						for (int i = 0; entities[i].str != NULL; i++)
+						{
+							if (entity == entities[i].str)
+							{
+								found = true;
+								ret[count++] = entities[i].chr;
+								ptr = end + 1;
+								break;
+							}
+						}
+
+						if (!found)
+						{
+							ret[count++] = *ptr++;
+						}
+					}
+				}
+				else
+				{
+					ret[count++] = *ptr++;
+				}
+			}
+
+			ret.erase(count);
+
+//			printf("url_end: %s\n", ret.c_str());
+			return ret;
 }
 
-string Util::RemoveDiacritics(const string& text) {
-  string output = text;
-  Util::InitDiacritics();
-  unordered_map<unsigned char, char>::iterator it;
-  for (it = Util::diacritics_.begin(); it != Util::diacritics_.end(); ++it) {
-    replace(output.begin(), output.end(), (char)it->first, it->second);
+bool Util::IsNumber(const string& text) {
+  for (int i = 0; i < text.size(); ++i) {
+    if (text[i] < 48 || text[i] > 57)
+      return false;
   }
-  return output;
-  
+  return true;
 }
+

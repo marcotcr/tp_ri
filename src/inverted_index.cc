@@ -2,7 +2,8 @@
 #include <sstream>
 
 InvertedIndex::InvertedIndex(const string& input_directory,
-const string& index_filename): number_of_runs_(0), current_document_id_(1) {
+const string& index_filename): number_of_runs_(0), current_document_id_(1),
+number_of_triples_(0), size_of_vocabulary_(0) {
   reader = new CollectionReader(input_directory, index_filename);
 }
 
@@ -29,8 +30,6 @@ const string& document_url_file) {
   Document document;
   document.clear();
   while(reader->getNextDocument(document)) {
-    document.clear();
-    reader->getNextDocument(document);
     this->ParseIntoIndexTerms(Util::ParseHTMLdocument(document.getText()),
     &index_terms);
     TermFrequencyMap::iterator it;
@@ -40,20 +39,25 @@ const string& document_url_file) {
     int document_id = current_document_id_++;
 
     for (it = index_terms.begin(); it != index_terms.end(); ++it) {
-
-       
       this->ProcessIndexTerm(it->first, document_id, it->second);
       // This is the size of the map structure plus the size of the elements.
-      int size_of_vocabulary = sizeof(vocabulary_) + vocabulary_.size() *
+      int size_of_vocabulary = sizeof(vocabulary_) + size_of_vocabulary_ *
       (MAXIMUM_STRING_SIZE + sizeof(int));
+      if (current_document_id_ % 500 == 0)
+      cout<<size_of_vocabulary_<<endl;
+      maximum_number_of_triples = 500000;
       //maximum_number_of_triples = (AVAILABLE_MEMORY - size_of_vocabulary)/
       //size_of_triple;
-      maximum_number_of_triples = 500;
-      if (maximum_number_of_triples <= triples_.size()) {
+      //cout << maximum_number_of_triples <<endl;
+      if (maximum_number_of_triples <= number_of_triples_) {
         this->WriteRunOnDisk(number_of_runs_++, document_url_file);
       }
     }
     index_terms.clear();
+    document.clear();
+    if (current_document_id_ % 500 ==0)
+      cout<< "Im processing document "<<current_document_id_<<endl;
+    //if (current_document_id_ == 1000) break;
   }
   if (!triples_.empty()) {
     this->WriteRunOnDisk(number_of_runs_++, document_url_file);
@@ -92,7 +96,7 @@ void InvertedIndex::MergeRuns(const string& output_file) {
   for (int i = 0; i < runs.size(); ++i) {
     for (int j = 0; j < read_size; ++j) {
       if (fscanf(runs[i], "%d %d %d", &temp_term, &temp_document,
-      &temp_frequency) <= 0) break;
+      &temp_frequency) != 3) break;
       TermDocumentFrequency temp_triple(temp_term, temp_document,
       temp_frequency);
       pair<TermDocumentFrequency, int> temp_pair(temp_triple, i);
@@ -118,7 +122,7 @@ void InvertedIndex::MergeRuns(const string& output_file) {
       // FIXME: Maybe make this a function somehow.
       for (int i = 0; i < read_size; ++i) {
         if (fscanf(runs[run_number], "%d %d %d", &temp_term, &temp_document,
-        &temp_frequency) <= 0) break;
+        &temp_frequency) != 3) break;
         TermDocumentFrequency temp_triple(temp_term, temp_document,
         temp_frequency);
         pair<TermDocumentFrequency, int> temp_pair(temp_triple, run_number);
@@ -128,7 +132,6 @@ void InvertedIndex::MergeRuns(const string& output_file) {
       }
     } 
   }
-
   fclose(output);
   for (int i = 0; i < runs.size(); ++i) {
     fclose(runs[i]);
@@ -279,9 +282,11 @@ TermFrequencyMap* index_terms) {
   list<string> terms = Util::SeparateIntoWords(document);
   list<string>::iterator it;
   for (it = terms.begin(); it != terms.end(); ++it) {
-    if (vocabulary_.count(*it) == 0) {
+    if (Util::IsNumber(*it)) continue;
+    if ((*it).length() <= 2) continue;
+    if (vocabulary_.count((*it).substr(0,MAXIMUM_STRING_SIZE)) == 0) {
      // Only allow for MAXIMUM_STRING_SIZE characters max for each word.
-     vocabulary_[(*it).substr(0,MAXIMUM_STRING_SIZE)] = vocabulary_.size();
+     vocabulary_[(*it).substr(0,MAXIMUM_STRING_SIZE)] = ++size_of_vocabulary_;
     }
     (*index_terms)[(*it).substr(0,MAXIMUM_STRING_SIZE)]++;
   }
@@ -291,6 +296,7 @@ void InvertedIndex::ProcessIndexTerm(const string& index_term,
 const int document, const int term_frequency) {
   TermDocumentFrequency temp(vocabulary_[index_term], document, term_frequency);
   triples_.push_back(temp);
+  number_of_triples_++;
 }
 
 void InvertedIndex::PrintTriples() {
@@ -322,6 +328,7 @@ const string& document_url_file) {
     (*it).frequency());
   }
   triples_.clear();
+  number_of_triples_ = 0;
   fclose(output);
   
   this->AppendDocumentUrlFile(document_url_file);

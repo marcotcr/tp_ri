@@ -37,7 +37,10 @@ const string& vocabulary_file, const string& document_url_file) {
 }
 
 list<string> QueryProcessor::ProcessQuery(string query) {
-  list<string> words = Util::SeparateIntoWords(query);
+  
+  string temp = query;
+  Util::StringToLowerCase(&temp);
+  list<string> words = Util::SeparateIntoWords(temp);
   int i = 1;
   list<string>::iterator it;
   bool is_and = 0;

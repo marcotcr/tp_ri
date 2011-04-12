@@ -22,7 +22,7 @@
 using namespace RICPNS;
 
 const int MAXIMUM_STRING_SIZE = 50;
-const long int AVAILABLE_MEMORY = 41943040; // 40 MegaBytes
+const long int AVAILABLE_MEMORY = 10485760;//41943040; // 40 MegaBytes
 
 using namespace std;
 using namespace std::tr1;
@@ -61,6 +61,10 @@ class InvertedIndex {
   RICPNS::CollectionReader* reader;
 
   int number_of_runs_;
+
+  int number_of_triples_;
+
+  int size_of_vocabulary_;
 
   // Parses a document into index terms. Fills an unordered_map of index terms
   // related to their frequency in the document. If an index term is not present

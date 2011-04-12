@@ -18,7 +18,7 @@
 #include <htmlcxx/html/utils.h>
 #include <htmlcxx/html/CharsetConverter.h>
 
-#define SEPARATORS " \n\t\v\r.,:;?!()[]#=+-_|/<>\"\'"
+#define SEPARATORS " \n\t\v\r.,:;?!()[]#=+-_|/<>\"\'@"
 using namespace std;
 using namespace std::tr1;
 using namespace htmlcxx;
@@ -26,7 +26,7 @@ using namespace htmlcxx;
 // Aggregates useful static methods.
 class Util {
  public:
-  // Splits a string into a list of words. Makes everything lowercase.
+  // Splits a string into a list of words.
   static list<string> SeparateIntoWords(const string& text);
 
   // Returns true if string contains an html comment - false otherwise. The input
@@ -38,23 +38,17 @@ class Util {
 
   // Parses an html file using htmlcxx and returns a string with the text.
   // Returns empty string if document is not a HTML file. Return string in
-  // UTF-8.
+  // UTF-8, and all lowercase.
   static string ParseHTMLdocument(const string& document);
 
-  // Removes most diacritics from an ISO-8851 string.
-  static string RemoveDiacritics(const string& text);
+  // Removes most diacritics from an ISO-8851 string and fixes &*; html stuff.
+  static string DecodeEntities(const string& str);
 
-
-  // Initializes the diacritics map.
-  static void InitDiacritics(); 
+  // Returns 1 if string is composed only by numbers.
+  static bool IsNumber(const string& text);
 
  private:
-  // Maps the diacritics into their correspondents.
-  static unordered_map<unsigned char, char> diacritics_;
-
-
   Util();
-  static bool diacritics_ready_;
 };
 
 #endif // UTIL_H

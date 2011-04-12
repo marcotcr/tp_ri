@@ -17,8 +17,8 @@ using namespace htmlcxx;
 
 int main(int argc, char** argv) {
 
-  std::string input_directory("./");
-  std::string index_filename("indexToCompressedColection.txt");
+  std::string input_directory("./data/");
+  std::string index_filename("index.txt");
  /* CollectionReader * reader = new CollectionReader(input_directory,
                               index_filename);
   Document doc;
@@ -89,6 +89,7 @@ int main(int argc, char** argv) {
   string document_url_file =  "document_url";
   oi.Init(document_list, index_file, vocabulary_file, output_file,
   document_url_file);
+  cout<<"CHEGUEI AQUI"<<endl;
   QueryProcessor ola;
   string query;
   ola.Init(output_file, index_file,vocabulary_file, document_url_file); 
