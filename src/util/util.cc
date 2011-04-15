@@ -4,6 +4,7 @@
 // This is a compendium of useful functions.
 
 #include "util.h"
+#include <limits.h>
 
 list<string> Util::SeparateIntoWords(const string& text) {
   char temp_string[text.size()];
@@ -45,10 +46,14 @@ string Util::ParseHTMLdocument(const string& document) {
   }
   bool is_UTF8 = HTML::detect_utf8(temp.c_str(), temp.length());
   HTML::ParserDom parser;
-  CharsetConverter converter("ISO-8859-1","UTF-8");
+  CharsetConverter converter("ISO-8859-1","ASCII//TRANSLIT");
   string temporary = Util::DecodeEntities(temp);
   if (!is_UTF8) {
     temporary = converter.convert(temporary);
+  }
+  else {
+    CharsetConverter converter2("UTF-8", "ASCII//TRANSLIT");
+    temporary = converter2.convert(temporary);
   }
   tree<HTML::Node> dom = parser.parseTree(temporary);
   tree<HTML::Node>::iterator it = dom.begin();
@@ -256,13 +261,5 @@ string Util::DecodeEntities(const string &str)
 
 //			printf("url_end: %s\n", ret.c_str());
 			return ret;
-}
-
-bool Util::IsNumber(const string& text) {
-  for (int i = 0; i < text.size(); ++i) {
-    if (text[i] < 48 || text[i] > 57)
-      return false;
-  }
-  return true;
 }
 

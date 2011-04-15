@@ -18,7 +18,7 @@
 #include <htmlcxx/html/utils.h>
 #include <htmlcxx/html/CharsetConverter.h>
 
-#define SEPARATORS " \n\t\v\r.,:;?!()[]#=+-_|/<>\"\'@"
+#define SEPARATORS " \n\t\v\r.,:;?!()[]#=+-_|/<>\"\'@1234567890*"
 using namespace std;
 using namespace std::tr1;
 using namespace htmlcxx;
@@ -43,9 +43,6 @@ class Util {
 
   // Removes most diacritics from an ISO-8851 string and fixes &*; html stuff.
   static string DecodeEntities(const string& str);
-
-  // Returns 1 if string is composed only by numbers.
-  static bool IsNumber(const string& text);
 
  private:
   Util();

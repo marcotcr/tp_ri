@@ -21,13 +21,15 @@
 #include "./CollectionReader.h"
 using namespace RICPNS;
 
-const int MAXIMUM_STRING_SIZE = 50;
-const long int AVAILABLE_MEMORY = 10485760;//41943040; // 40 MegaBytes
+const int MAXIMUM_STRING_SIZE = 10;
+//const long int AVAILABLE_MEMORY = 10000000; // 40 MegaBytes
 
 using namespace std;
 using namespace std::tr1;
 class InvertedIndex {
  public:
+  //FIXME
+  unsigned long long int AVAILABLE_MEMORY;
   typedef unordered_map<string, int> TermFrequencyMap;
 
   // Default constructor - initializes variables. Receives as parameters the
@@ -36,7 +38,7 @@ class InvertedIndex {
 
   // Initializes and constructs the inverted index. Writes everything in the
   // appropriate files.
-  void Init(const list<Document>& document_list, const string& index_file,
+  void Init(const string& index_file,
   const string& vocabulary_file, const string& inverted_file, const string&
   document_url_file);
   void PrintTriples();
@@ -49,7 +51,7 @@ class InvertedIndex {
   unordered_map<string, int> vocabulary_;
 
   // Maps a document id to it's URL
-  unordered_map<int, string> document_url_;
+  unordered_map<string, int> document_url_;
 
   // Array of triples. A triple (t, d, f(d,t)) is:
   // t --> term (this is the term's id),
@@ -66,6 +68,8 @@ class InvertedIndex {
 
   int size_of_vocabulary_;
 
+  unsigned long long maximum_number_of_triples_;
+
   // Parses a document into index terms. Fills an unordered_map of index terms
   // related to their frequency in the document. If an index term is not present
   // in the dictionary yet, it is added to it.
@@ -79,8 +83,7 @@ class InvertedIndex {
 
   // Processes the list of documents, writing runs to disk whenever the number
   // of triples threatens the memory capacity.
-  void ProcessDocumentList(const list<Document>& document_list, const string&
-  document_url_file);
+  void ProcessDocumentList(const string& document_url_file);
 
   // Merges the runs into the output file, fully sorted.
   void MergeRuns(const string& output_file);

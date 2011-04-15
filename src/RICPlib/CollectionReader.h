@@ -8,6 +8,8 @@
 
 #include "envDefault.h"
 #include "Document.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <string>
 

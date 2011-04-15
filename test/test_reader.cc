@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
   printf("Total: %d\n", i);
   delete reader;
   return EXIT_SUCCESS;*/
-  std::list<Document> document_list;
+  /*std::list<Document> document_list;
   Document teste;
   teste.setURL("url1");
   teste.setText("Pease porridge hot, pease porridge cold, oi");
@@ -79,17 +79,18 @@ int main(int argc, char** argv) {
   document_list.push_back(teste);
   teste.setURL("url6");
   teste.setText("Nine days old.oi");
-  document_list.push_back(teste);
+  document_list.push_back(teste);*/
   //FIXME
   system ("rm document_url");
   std::string output_file = "output";
   InvertedIndex oi(input_directory, index_filename);
+  oi.AVAILABLE_MEMORY = atoi(argv[1]);
   string index_file = "index";
   string vocabulary_file = "vocabulary";
   string document_url_file =  "document_url";
-  oi.Init(document_list, index_file, vocabulary_file, output_file,
+  oi.Init(index_file, vocabulary_file, output_file,
   document_url_file);
-  cout<<"CHEGUEI AQUI"<<endl;
+  /*
   QueryProcessor ola;
   string query;
   ola.Init(output_file, index_file,vocabulary_file, document_url_file); 
@@ -102,7 +103,7 @@ int main(int argc, char** argv) {
   for (it = documents.begin(); it != documents.end(); ++it) {
     cout<< *it << endl;
     
-  }
+  }*/
 //  oi.PrintTriples();
 
 }

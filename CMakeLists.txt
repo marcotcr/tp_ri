@@ -4,8 +4,8 @@
 
 PROJECT(RI)
 
-#set (CMAKE_C_FLAGS "-Wall")
-#set (CMAKE_CXX_FLAGS "-Wall")
+#set (CMAKE_C_FLAGS "-g")
+#set (CMAKE_CXX_FLAGS "-g")
 
 ADD_SUBDIRECTORY( src )
 ADD_SUBDIRECTORY( test )
